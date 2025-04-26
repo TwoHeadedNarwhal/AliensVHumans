@@ -42,107 +42,27 @@
       margin-bottom: 1rem;
       color: var(--primary);
     }
-    .intro-text {
-      font-size: 1rem;
-      margin-bottom: 1rem;
-      color: var(--dark);
-    }
-    label {
-      font-weight: 500;
-    }
-    input {
-      font-size: 1rem;
-      padding: 0.5rem;
-      width: 60px;
-      margin: 0.5rem;
-      border: 1px solid var(--dark);
-      border-radius: 4px;
-      text-align: center;
-    }
-    button {
-      font-size: 1rem;
-      padding: 0.8rem;
-      width: 100%;
-      background: var(--accent);
-      color: var(--light);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    button:active {
-      transform: scale(0.97);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
+    .intro-text { font-size: 1rem; margin-bottom: 1rem; }
+    label { font-weight: 500; }
+    input { font-size: 1rem; padding: 0.5rem; width: 60px; margin: 0.5rem; border: 1px solid var(--dark); border-radius: 4px; text-align: center; }
+    button { font-size: 1rem; padding: 0.8rem; width: 100%; background: var(--accent); color: var(--light); border: none; border-radius: 8px; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: transform 0.2s, box-shadow 0.2s; }
+    button:active { transform: scale(0.97); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
     .hidden { display: none; }
-    .cardContainer {
-      perspective: 1000px;
-      margin: 1rem 0;
-    }
-    .card {
-      width: 100%;
-      height: 300px;
-      position: relative;
-      transform-style: preserve-3d;
-      transition: transform 0.6s;
-    }
-    .card.flipped {
-      transform: rotateY(180deg);
-    }
-    .cardSide {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      backface-visibility: hidden;
-      border-radius: 12px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      padding: 1rem;
-      background: var(--card-bg);
-    }
-    .cardFront {
-      background: var(--primary);
-      color: var(--light);
-    }
-    .cardFront h2 {
-      font-size: 4rem;
-      margin-bottom: 0.5rem;
-    }
-    .cardBack {
-      transform: rotateY(180deg);
-      color: var(--dark);
-      text-align: left;
-    }
-    .cardBack .title {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-      text-align: center;
-    }
-    .cardBack p {
-      margin: 0.5rem 0;
-      line-height: 1.4;
-    }
-    .cardBack small {
-      display: block;
-      margin-top: 1rem;
-      font-size: 0.75rem;
-      text-align: center;
-      color: #888;
-    }
-    .progress {
-      font-size: 0.9rem;
-      margin-top: 0.5rem;
-      color: var(--dark);
-    }
+    .cardContainer { perspective: 1000px; margin: 1rem 0; }
+    .card { width: 100%; height: 300px; position: relative; transform-style: preserve-3d; transition: transform 0.6s; }
+    .cardSide { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 1rem; background: var(--card-bg); }
+    .cardFront { background: var(--primary); color: var(--light); }
+    .cardFront h2 { font-size: 4rem; margin-bottom: 0.5rem; }
+    .cardBack { transform: rotateY(180deg); color: var(--dark); text-align: left; }
+    .cardBack .title { font-size: 1.4rem; font-weight: 600; margin-bottom: 0.5rem; text-align: center; }
+    .cardBack p { margin: 0.5rem 0; line-height: 1.4; }
+    .cardBack small { display: block; margin-top: 1rem; font-size: 0.75rem; text-align: center; color: #888; }
+    .progress { font-size: 0.9rem; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
 
+  <!-- Setup screen (host only) -->
   <div id="setup">
     <h1>🛸 Alien vs. Human</h1>
     <p class="intro-text">Welcome to Caprina's Party! From yours truly, <strong>Kris</strong>. Ready to unmask the aliens?</p>
@@ -151,94 +71,158 @@
     <button id="startBtn">Start Game</button>
   </div>
 
+  <!-- Game screen (host after setup, and all joiners) -->
   <div id="game" class="hidden">
-    <div class="progress" id="progressText">Player 0 / 0</div>
+    <div class="progress" id="progressText">Connecting...</div>
     <div class="cardContainer">
-      <div class="card" id="card">
+      <div class="card">
+        <!-- Front face -->
         <div class="cardSide cardFront">
           <h2>?</h2>
-          <p>Tap to Reveal</p>
+          <p id="frontText">Tap to Reveal</p>
         </div>
-        <div class="cardSide cardBack" id="cardBack">
-          <!-- Filled dynamically -->
-        </div>
+        <!-- Back face -->
+        <div class="cardSide cardBack" id="cardBack"></div>
       </div>
     </div>
-    <button id="actionBtn">Reveal</button>
+    <button id="actionBtn" disabled>Loading...</button>
   </div>
 
+  <!-- Firebase compat SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
   <script>
-    // Shuffle utility
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcwv_keIXgGsDwfRFY9tRjPJ6Xg3sPwbQ",
+      authDomain: "aliensvhumans-9346e.firebaseapp.com",
+      databaseURL: "https://aliensvhumans-9346e-default-rtdb.firebaseio.com",
+      projectId: "aliensvhumans-9346e",
+      storageBucket: "aliensvhumans-9346e.firebasestorage.app",
+      messagingSenderId: "55041202103",
+      appId: "1:55041202103:web:861dfe77c100346e943a32"
+    };
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+  </script>
+
+  <script>
+    // Utility to shuffle an array
     function shuffle(arr) {
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
     }
+    // Generate a short alphanumeric session ID
+    function createSessionId() {
+      return Math.random().toString(36).substring(2, 6).toUpperCase();
+    }
 
-    const setupEl = document.getElementById('setup');
-    const gameEl  = document.getElementById('game');
-    const progressText = document.getElementById('progressText');
-    const cardEl   = document.getElementById('card');
-    const backEl   = document.getElementById('cardBack');
-    const actionBtn = document.getElementById('actionBtn');
+    // DOM references
+    const setupEl   = document.getElementById('setup');
+    const gameEl    = document.getElementById('game');
     const startBtn  = document.getElementById('startBtn');
-    let roles = [], current = 0, revealed = false;
+    const playerCountInput = document.getElementById('playerCount');
+    const progressText = document.getElementById('progressText');
+    const actionBtn    = document.getElementById('actionBtn');
+    const backEl       = document.getElementById('cardBack');
 
-    startBtn.addEventListener('click', () => {
-      const n = parseInt(document.getElementById('playerCount').value);
-      if (n < 5) { alert('Need at least 5 players'); return; }
-      roles = Array(4).fill('alien').concat(Array(n-4).fill('human'));
-      shuffle(roles);
-      current = 0; revealed = false;
-      setupEl.classList.add('hidden');
-      gameEl.classList.remove('hidden');
-      progressText.textContent = `Player ${current+1} / ${roles.length}`;
-      cardEl.classList.remove('flipped');
-      actionBtn.textContent = 'Reveal';
-      backEl.innerHTML = '';
+    // State
+    let sessionId, roles = [], playerCount = 0, myRole = '', revealed = false;
+
+    // On load: check if a session code is in the URL
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      sessionId = params.get('session');
+      if (sessionId) {
+        // Joining existing session
+        setupEl.classList.add('hidden');
+        gameEl.classList.remove('hidden');
+        joinSession(sessionId);
+      }
     });
 
-    actionBtn.addEventListener('click', () => {
-      if (!revealed) {
-        const role = roles[current];
-        // Populate back side
-        if (role === 'alien') {
-          backEl.innerHTML = `
-            <div class="title">Shhhh!! You're an ALIEN</div>
-            <p><strong>Objective:</strong> Blend in among human agents. Avoid detection at all costs!</p>
-            <p><strong>Rules:</strong><br>
-              1) Tell at least one small lie to each individual.<br>
-              2) Mingle and answer questions naturally.<br>
-              3) Maintain your cover until voting.
-            </p>
-            <small>Your Mission is Survival. Exposure is Failure.</small>`;
-        } else {
-          backEl.innerHTML = `
-            <div class="title">Shhhh!! You're a HUMAN</div>
-            <p><strong>Objective:</strong> Identify and expose hidden alien infiltrators. They’re lying!</p>
-            <p><strong>Rules:</strong><br>
-              1) Mingle and ask casual questions.<br>
-              2) Watch for inconsistencies.<br>
-              3) Vote for suspected aliens at night’s end.
-            }</p>
-            <small>Trust No One. Protect Earth at All Costs.</small>`;
+    // Host clicks “Start Game”
+    startBtn.addEventListener('click', async () => {
+      playerCount = parseInt(playerCountInput.value);
+      if (playerCount < 5) { alert('Need at least 5 players'); return; }
+      // Build and shuffle roles
+      roles = Array(4).fill('alien').concat(Array(playerCount - 4).fill('human'));
+      shuffle(roles);
+      // Create session record
+      sessionId = createSessionId();
+      await db.ref('sessions/' + sessionId).set({
+        playerCount: playerCount,
+        roles: roles,
+        joinCount: 0,
+        hostId: sessionId
+      });
+      // Update URL so players join same session
+      history.replaceState(null, '', '?session=' + sessionId);
+      setupEl.classList.add('hidden');
+      gameEl.classList.remove('hidden');
+      joinSession(sessionId);
+    });
+
+    // All clients (host and joiners) run this to claim a role
+    function joinSession(id) {
+      const sessionRef = db.ref('sessions/' + id);
+      sessionRef.once('value').then(snapshot => {
+        if (!snapshot.exists()) {
+          alert('Session not found'); return;
         }
-        cardEl.classList.add('flipped');
-        actionBtn.textContent = current < roles.length - 1 ? 'Next' : 'Finish';
-        revealed = true;
-      } else {
-        current++;
-        if (current < roles.length) {
-          revealed = false;
-          cardEl.classList.remove('flipped');
-          progressText.textContent = `Player ${current+1} / ${roles.length}`;
+        const data = snapshot.val();
+        roles = data.roles;
+        playerCount = data.playerCount;
+        // Atomically increment joinCount to get our index
+        const joinRef = sessionRef.child('joinCount');
+        joinRef.transaction(current => {
+          if (current === null) return 1;
+          if (current < playerCount) return current + 1;
+          return; // full
+        }, (err, committed, snap) => {
+          if (err || !committed) {
+            alert('Unable to join (session may be full)'); return;
+          }
+          const index = snap.val() - 1;
+          myRole = roles[index];
+          progressText.textContent = `Player ${index+1} of ${playerCount}`;
+          actionBtn.disabled = false;
           actionBtn.textContent = 'Reveal';
-        } else {
-          progressText.textContent = 'All roles revealed!';
-          actionBtn.disabled = true;
-        }
+        });
+      });
+    }
+
+    // Reveal our assigned role when tapped
+    actionBtn.addEventListener('click', () => {
+      if (revealed) return;
+      revealed = true;
+      let backHTML = '';
+      if (myRole === 'alien') {
+        backHTML = `
+          <div class="title">Shhhh!! You're an ALIEN</div>
+          <p><strong>Objective:</strong> Blend in among human agents. Avoid detection at all costs!</p>
+          <p><strong>Rules:</strong><br>
+            1) Tell at least one small lie to each individual.<br>
+            2) Mingle and answer questions naturally.<br>
+            3) Maintain your cover until voting.
+          </p>
+          <small>Your Mission is Survival. Exposure is Failure.</small>`;
+      } else {
+        backHTML = `
+          <div class="title">Shhhh!! You're a HUMAN</div>
+          <p><strong>Objective:</strong> Identify and expose hidden alien infiltrators. They’re lying!</p>
+          <p><strong>Rules:</strong><br>
+            1) Mingle and ask casual questions.<br>
+            2) Watch for inconsistencies.<br>
+            3) Vote for suspected aliens at night’s end.
+          </p>
+          <small>Trust No One. Protect Earth at All Costs.</small>`;
       }
+      backEl.innerHTML = backHTML;
+      actionBtn.textContent = 'Done';
     });
   </script>
 
