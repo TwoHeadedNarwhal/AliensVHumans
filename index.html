@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Alien vs. Human</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --accent: #e74c3c;
+      --primary: #3498db;
+      --dark: #2c3e50;
+      --light: #ffffff;
+      --bg: #f4f6f8;
+      --card-bg: #ffffff;
+      --font: 'Poppins', sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    #setup, #game {
+      width: 90%;
+      max-width: 400px;
+      text-align: center;
+      margin: 1rem 0;
+    }
+    h1 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--primary);
+    }
+    .intro-text {
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      color: var(--dark);
+    }
+    label {
+      font-weight: 500;
+    }
+    input {
+      font-size: 1rem;
+      padding: 0.5rem;
+      width: 60px;
+      margin: 0.5rem;
+      border: 1px solid var(--dark);
+      border-radius: 4px;
+      text-align: center;
+    }
+    button {
+      font-size: 1rem;
+      padding: 0.8rem;
+      width: 100%;
+      background: var(--accent);
+      color: var(--light);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:active {
+      transform: scale(0.97);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .hidden { display: none; }
+    .cardContainer {
+      perspective: 1000px;
+      margin: 1rem 0;
+    }
+    .card {
+      width: 100%;
+      height: 300px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+    .cardSide {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 1rem;
+      background: var(--card-bg);
+    }
+    .cardFront {
+      background: var(--primary);
+      color: var(--light);
+    }
+    .cardFront h2 {
+      font-size: 4rem;
+      margin-bottom: 0.5rem;
+    }
+    .cardBack {
+      transform: rotateY(180deg);
+      color: var(--dark);
+      text-align: left;
+    }
+    .cardBack .title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+    .cardBack p {
+      margin: 0.5rem 0;
+      line-height: 1.4;
+    }
+    .cardBack small {
+      display: block;
+      margin-top: 1rem;
+      font-size: 0.75rem;
+      text-align: center;
+      color: #888;
+    }
+    .progress {
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      color: var(--dark);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="setup">
+    <h1>🛸 Alien vs. Human</h1>
+    <p class="intro-text">Welcome to Caprina's Party! From yours truly, <strong>Kris</strong>. Ready to unmask the aliens?</p>
+    <label for="playerCount">Players:</label>
+    <input type="number" id="playerCount" min="5" max="20" value="8">
+    <button id="startBtn">Start Game</button>
+  </div>
+
+  <div id="game" class="hidden">
+    <div class="progress" id="progressText">Player 0 / 0</div>
+    <div class="cardContainer">
+      <div class="card" id="card">
+        <div class="cardSide cardFront">
+          <h2>?</h2>
+          <p>Tap to Reveal</p>
+        </div>
+        <div class="cardSide cardBack" id="cardBack">
+          <!-- Filled dynamically -->
+        </div>
+      </div>
+    </div>
+    <button id="actionBtn">Reveal</button>
+  </div>
+
+  <script>
+    // Shuffle utility
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+    }
+
+    const setupEl = document.getElementById('setup');
+    const gameEl  = document.getElementById('game');
+    const progressText = document.getElementById('progressText');
+    const cardEl   = document.getElementById('card');
+    const backEl   = document.getElementById('cardBack');
+    const actionBtn = document.getElementById('actionBtn');
+    const startBtn  = document.getElementById('startBtn');
+    let roles = [], current = 0, revealed = false;
+
+    startBtn.addEventListener('click', () => {
+      const n = parseInt(document.getElementById('playerCount').value);
+      if (n < 5) { alert('Need at least 5 players'); return; }
+      roles = Array(4).fill('alien').concat(Array(n-4).fill('human'));
+      shuffle(roles);
+      current = 0; revealed = false;
+      setupEl.classList.add('hidden');
+      gameEl.classList.remove('hidden');
+      progressText.textContent = `Player ${current+1} / ${roles.length}`;
+      cardEl.classList.remove('flipped');
+      actionBtn.textContent = 'Reveal';
+      backEl.innerHTML = '';
+    });
+
+    actionBtn.addEventListener('click', () => {
+      if (!revealed) {
+        const role = roles[current];
+        // Populate back side
+        if (role === 'alien') {
+          backEl.innerHTML = `
+            <div class="title">Shhhh!! You're an ALIEN</div>
+            <p><strong>Objective:</strong> Blend in among human agents. Avoid detection at all costs!</p>
+            <p><strong>Rules:</strong><br>
+              1) Tell at least one small lie to each individual.<br>
+              2) Mingle and answer questions naturally.<br>
+              3) Maintain your cover until voting.
+            </p>
+            <small>Your Mission is Survival. Exposure is Failure.</small>`;
+        } else {
+          backEl.innerHTML = `
+            <div class="title">Shhhh!! You're a HUMAN</div>
+            <p><strong>Objective:</strong> Identify and expose hidden alien infiltrators. They’re lying!</p>
+            <p><strong>Rules:</strong><br>
+              1) Mingle and ask casual questions.<br>
+              2) Watch for inconsistencies.<br>
+              3) Vote for suspected aliens at night’s end.
+            }</p>
+            <small>Trust No One. Protect Earth at All Costs.</small>`;
+        }
+        cardEl.classList.add('flipped');
+        actionBtn.textContent = current < roles.length - 1 ? 'Next' : 'Finish';
+        revealed = true;
+      } else {
+        current++;
+        if (current < roles.length) {
+          revealed = false;
+          cardEl.classList.remove('flipped');
+          progressText.textContent = `Player ${current+1} / ${roles.length}`;
+          actionBtn.textContent = 'Reveal';
+        } else {
+          progressText.textContent = 'All roles revealed!';
+          actionBtn.disabled = true;
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
